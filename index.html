@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Лав-Гав & Лут — Романтический симулятор питомцев</title>
+
+  <!-- Подключение шрифтов Google -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <!-- Иконки FontAwesome (стабильный CDN с поддержкой шрифтов) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/all.min.css">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            pixel: ['"Press Start 2P"', 'monospace'],
+            retro: ['"VT323"', 'monospace'],
+            mono: ['"Share Tech Mono"', 'monospace']
+          },
+          colors: {
+            retroBg: '#0b110c',
+            retroCard: '#131c14',
+            retroBorder: '#22c55e',
+            retroNeon: '#4ade80',
+            retroDark: '#1a241b'
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen flex flex-col justify-between relative overflow-x-hidden font-retro selection:bg-retroNeon selection:text-black">
+
+  <!-- Модальное окно туториала -->
+  <div id="tutorial-modal" class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+    <div class="bg-retroCard border-4 border-retroBorder p-8 max-w-md w-full text-center box-shadow-retro">
+      <div id="tutorial-text" class="font-mono text-retroNeon text-sm mb-8 space-y-4 text-left">
+        <p id="text-1" class="opacity-0 transition-opacity">Год 2026. Система дает сбой...</p>
+        <p id="text-2" class="opacity-0 transition-opacity">Они искали друг друга в коде...</p>
+        <p id="text-3" class="opacity-0 transition-opacity">И вот, Matchroom активирован...</p>
+      </div>
+      <button onclick="closeTutorialModal()" id="start-btn" class="hidden w-full py-3 bg-retroBorder text-retroBg font-pixel text-xs uppercase hover:bg-retroNeon">
+        НАЧАТЬ ПОИСК
+      </button>
+    </div>
+  </div>
+
+  <div class="crt-overlay"></div>
+
+  <header class="border-b-4 border-retroBorder bg-retroCard p-4 sticky top-0 z-40">
+  <div class="max-w-6xl mx-auto flex justify-between items-center">
+    <div class="flex items-center space-x-3 cursor-pointer" onclick="synth.playClick()">
+      <div class="bg-retroBorder text-retroBg p-2 border-2 border-retroNeon flex items-center justify-center">
+        <i class="fa-solid fa-heart text-lg animate-pulse"></i>
+      </div>
+      <div>
+        <h1 class="font-pixel text-[11px] md:text-sm tracking-wider text-retroNeon uppercase">ЛАВ-ГАВ & ЛУТ</h1>
+        <p class="text-xs text-gray-400 font-mono tracking-widest mt-0.5">LOVE-GHAV & LOOT (V1.0.0)</p>
+      </div>
+    </div>
+
+     <div id="player-stats-panel" class="hidden md:flex items-center space-x-6 text-sm font-mono bg-retroBg px-4 py-2 border-2 border-retroBorder">
+      <div class="flex items-center space-x-3 text-retroNeon border-r border-gray-700 pr-6">
+        <span id="header-player-avatar" class="text-2xl w-10 h-10 flex items-center justify-center overflow-hidden border border-retroBorder"></span>
+        <div>
+          <p class="text-[8px] uppercase">Ваш герой:</p>
+          <span id="header-pet-name" class="font-bold underline"></span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span>🦴 <span id="header-bones-count" class="text-yellow-400 font-bold">0</span></span>
+        <span>🐟 <span id="header-fish-count" class="text-cyan-400 font-bold">0</span></span>
+        <span>🌸 <span id="header-flowers-count" class="text-pink-400 font-bold">0</span></span>
+      </div>
+      <button onclick="resetGame()" class="ml-4 text-[8px] uppercase border border-red-500 text-red-500 px-2 py-1 hover:bg-red-500 hover:text-white">Сброс</button>
+    </div>
+  </div>
+</header>
+
+  <main class="max-w-6xl w-full mx-auto px-4 py-6 flex-grow flex flex-col justify-center items-center">
+
+    <!-- 1. РЕДАКТОР СТАДИИ (Character Creator) -->
+    <section id="character-creator" class="hidden w-full max-w-lg bg-retroCard border-4 border-retroBorder p-6 md:p-8 box-shadow-retro mb-8">
+      <h2 class="font-pixel text-center text-sm md:text-md text-retroNeon tracking-wider mb-6 uppercase">
+        СОЗДАЙ СВОЕГО ПИТОМЦА
+      </h2>
+
+      <form id="creator-form" class="space-y-6">
+        <!-- Выбор Вида -->
+        <div>
+          <label class="block text-retroNeon font-pixel text-[10px] tracking-wider mb-3">ВЫБЕРИ ВИД ПИТОМЦА:</label>
+          <div class="grid grid-cols-2 gap-4">
+            <label class="cursor-pointer">
+              <input type="radio" name="creator-type" value="dog" checked class="sr-only peer">
+              <div class="py-4 text-center border-2 border-gray-600 bg-retroBg text-gray-400 peer-checked:border-retroNeon peer-checked:text-retroNeon peer-checked:bg-retroBg hover:bg-retroDark transition duration-150">
+                <span class="text-4xl block mb-2">🐶</span>
+                <span class="font-pixel text-[10px] tracking-wider">ПЁСИК</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="creator-type" value="cat" class="sr-only peer">
+              <div class="py-4 text-center border-2 border-gray-600 bg-retroBg text-gray-400 peer-checked:border-retroNeon peer-checked:text-retroNeon peer-checked:bg-retroBg hover:bg-retroDark transition duration-150">
+                <span class="text-4xl block mb-2">🐱</span>
+                <span class="font-pixel text-[10px] tracking-wider">КОТИК</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Кличка -->
+        <div>
+          <label for="creator-name" class="block text-retroNeon font-pixel text-[10px] tracking-wider mb-2">КЛИЧКА ПИТОМЦА:</label>
+          <input
+            type="text"
+            id="creator-name"
+            required
+            maxlength="12"
+            placeholder="Прим: Лав-Гав, Лут"
+            class="w-full bg-retroBg border-2 border-gray-600 text-retroNeon focus:border-retroNeon px-4 py-3 outline-none text-lg font-mono tracking-wider"
+          >
+        </div>
+
+        <!-- Характер -->
+        <div>
+          <label for="creator-trait" class="block text-retroNeon font-pixel text-[10px] tracking-wider mb-2">ХАРАКТЕР:</label>
+          <select
+            id="creator-trait"
+            class="w-full bg-retroBg border-2 border-gray-600 text-retroNeon focus:border-retroNeon px-4 py-3 outline-none text-lg tracking-wider"
+          >
+            <option value="Романтик 💕">Романтик 💕</option>
+            <option value="Игривый ⚽">Игривый ⚽</option>
+            <option value="Дерзкий 😎">Дерзкий 😎</option>
+            <option value="Скромняга 😏">Скромняга 😏</option>
+          </select>
+        </div>
+
+        <!-- Кнопка запуска -->
+        <button
+          type="submit"
+          class="w-full py-4 text-center text-retroBg bg-retroNeon font-pixel text-[11px] tracking-widest hover:bg-[#86efac] active:translate-y-1 transition duration-150 border-2 border-white box-shadow-retro uppercase"
+          onclick="synth.playPowerup()"
+        >
+          НАЧАТЬ ПОИСК ЛЮБВИ!
+        </button>
+      </form>
+    </section>
+
+    <!-- 2. ИГРОВОЙ ИНТЕРФЕЙС ("ИСЛЕДУЙ МИР") -->
+    <section id="game-board" class="hidden w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-8">
+
+      <!-- ЛЕВАЯ ЧАСТЬ: Карточки знакомств питомцев -->
+      <div class="lg:col-span-7 space-y-6">
+        <div class="bg-retroCard border-4 border-retroBorder p-6 box-shadow-retro relative">
+
+          <div class="flex justify-between items-center mb-4 border-b-2 border-gray-800 pb-2">
+            <span class="text-retroNeon font-pixel text-[10px] uppercase">
+              <i class="fa-solid fa-radar mr-2 animate-ping"></i>Исследуй мир
+            </span>
+            <span class="text-xs text-gray-500 font-mono tracking-wider">ПИТОМЕЦ <span id="current-index-num">1</span>/6</span>
+          </div>
+
+          <!-- Контейнер карточки -->
+          <div class="relative min-h-[340px] flex flex-col justify-between">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+
+              <!-- Аватар питомца -->
+              <div class="md:col-span-5 flex justify-center">
+                <div id="target-pet-avatar" class="w-40 h-40 border-4 border-retroBorder bg-retroBg flex items-center justify-center text-7xl relative box-shadow-retro-pink overflow-hidden">
+                  <!-- Динамический аватар -->
+                  <img id="target-pet-img" src="" alt="pet" class="w-full h-full object-cover">
+                </div>
+              </div>
+
+              <!-- Описание питомца -->
+              <div class="md:col-span-7 space-y-3">
+                <div class="flex items-center space-x-3">
+                  <h3 id="target-pet-name" class="font-pixel text-[#f43f5e] text-lg uppercase">Шиба</h3>
+                  <span id="target-pet-trait" class="bg-retroBg text-retroNeon border border-retroBorder px-2 py-0.5 text-xs font-mono">Характер</span>
+                </div>
+
+                <!-- Шкала Любви -->
+                <div class="py-2">
+                  <div class="flex justify-between text-[8px] font-pixel text-retroNeon mb-1">
+                    <span>УРОВЕНЬ ЛЮБВИ</span>
+                    <span id="affection-percent">0%</span>
+                  </div>
+                  <div class="h-3 w-full bg-retroBg border border-retroBorder p-0.5">
+                    <div id="affection-bar" class="h-full bg-retroNeon transition-all duration-500" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <p id="target-pet-desc" class="text-gray-300 text-sm leading-relaxed font-mono">
+                  Любит гоняться за листьями и спать на солнышке в парке.
+                </p>
+                <div class="text-xs text-gray-500 font-mono flex items-center gap-1">
+                  <span>Обожает:</span> <span id="target-pet-fav" class="text-retroNeon">???</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Элементы управления знакомствами -->
+            <div class="mt-8 border-t-2 border-gray-800 pt-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
+
+              <!-- Кнопки Навигации -->
+              <div class="flex space-x-3">
+                <button onclick="changeCandidate(-1)" class="px-4 py-2 bg-retroDark border-2 border-retroBorder text-retroNeon font-pixel text-xs hover:bg-retroBorder hover:text-retroBg transition">
+                  &lt; НАЗАД
+                </button>
+                <button onclick="changeCandidate(1)" class="px-4 py-2 bg-retroDark border-2 border-retroBorder text-retroNeon font-pixel text-xs hover:bg-retroBorder hover:text-retroBg transition">
+                  СЛЕД. &gt;
+                </button>
+              </div>
+
+              <!-- Кнопка Взаимодействия -->
+              <div class="flex space-x-2 w-full sm:w-auto">
+                <button onclick="likeCurrentPet()" class="flex-grow sm:flex-grow-0 px-6 py-3 bg-red-600 border-2 border-white text-white font-pixel text-xs hover:bg-red-500 box-shadow-retro-red active:translate-y-0.5 transition duration-150 uppercase">
+                  ЛАЙК! <i class="fa-solid fa-heart ml-1 animate-pulse"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Подарки Лута (Дружи и флиртуй) -->
+        <div class="bg-retroCard border-4 border-retroBorder p-5 box-shadow-retro">
+          <h4 class="font-pixel text-[10px] text-retroNeon tracking-wider mb-4 uppercase">ПОДАРИТЬ ЛАКОМСТВО (ДРУЖИ И ФЛИРТУЙ):</h4>
+          <div class="grid grid-cols-3 gap-3">
+            <button onclick="giftItem('bones')" class="p-3 bg-retroBg border-2 border-gray-700 hover:border-yellow-500 hover:bg-retroDark flex flex-col items-center justify-center transition">
+              <span class="text-2xl mb-1">🦴</span>
+              <span class="font-mono text-xs text-yellow-400 font-bold">КОСТОЧКА</span>
+            </button>
+            <button onclick="giftItem('fish')" class="p-3 bg-retroBg border-2 border-gray-700 hover:border-cyan-500 hover:bg-retroDark flex flex-col items-center justify-center transition">
+              <span class="text-2xl mb-1">🐟</span>
+              <span class="font-mono text-xs text-cyan-400 font-bold">РЫБКА</span>
+            </button>
+            <button onclick="giftItem('flowers')" class="p-3 bg-retroBg border-2 border-gray-700 hover:border-pink-500 hover:bg-retroDark flex flex-col items-center justify-center transition">
+              <span class="text-2xl mb-1">🌸</span>
+              <span class="font-mono text-xs text-pink-400 font-bold">ЦВЕТОК</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ПРАВАЯ ЧАСТЬ: Мои совпадения и ЧАТ -->
+      <div class="lg:col-span-5 space-y-6">
+
+        <!-- Окно совпадений -->
+        <div class="bg-retroCard border-4 border-retroBorder p-5 box-shadow-retro flex flex-col h-[220px]">
+          <h2 class="font-pixel text-[10px] tracking-wider text-retroNeon mb-3 uppercase">
+            <i class="fa-solid fa-fire-flame-curved mr-1.5 animate-bounce"></i> Твои Пары (Любовь):
+          </h2>
+          <div id="matches-list-container" class="flex-grow overflow-y-auto space-y-2 pr-1">
+            <div class="text-center text-gray-600 text-sm italic py-8">Пока нет совпадений. Дари подарки и лайкай!</div>
+          </div>
+        </div>
+
+        <!-- Кибер-ЧАТ лобби -->
+        <div class="bg-retroCard border-4 border-retroBorder p-5 box-shadow-retro flex flex-col h-[320px]">
+          <div class="flex justify-between items-center mb-3 pb-2 border-b-2 border-gray-800">
+            <h2 class="font-pixel text-[10px] tracking-wider text-pink-500 uppercase">
+              <i class="fa-regular fa-comments mr-1.5 animate-pulse"></i> Секретный Чат
+            </h2>
+            <span class="text-xs text-gray-500 font-mono tracking-widest" id="chat-partner-name">НЕТ ДИАЛОГА</span>
+          </div>
+
+          <!-- Окно сообщений -->
+          <div id="chat-messages-container" class="flex-grow overflow-y-auto space-y-3 pr-1 mb-3 text-sm font-mono">
+            <div class="text-center text-gray-600 italic py-12">Выберите совпадение в списке выше для начала беседы.</div>
+          </div>
+
+          <!-- Форма отправки сообщений -->
+          <form id="chat-send-form" class="flex gap-2">
+            <input
+              type="text"
+              id="chat-user-input"
+              disabled
+              maxlength="100"
+              placeholder="Выбери пару..."
+              class="flex-grow bg-retroBg border-2 border-gray-600 text-retroNeon focus:border-retroNeon px-4 py-2 text-sm outline-none transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+            <button
+              type="submit"
+              id="chat-send-btn"
+              disabled
+              class="bg-retroBorder hover:bg-retroNeon text-retroBg px-4 py-2 font-pixel text-xs border border-white disabled:opacity-50"
+            >
+              ОТПРАВЛЬ
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- 3. КНОПКА ДОБЫЧИ "ЛУТА" -->
+    <section id="loot-generator" class="hidden w-full max-w-4xl bg-retroCard border-4 border-retroBorder p-5 box-shadow-retro mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="space-y-1">
+        <h3 class="font-pixel text-[10px] text-retroNeon uppercase">Добыча Лута (Заработок ресурсов):</h3>
+        <p class="text-xs text-gray-400 font-mono">В мире Лав-Гав & Лут вы можете регулярно копать сокровища и зарабатывать валюту любви!</p>
+      </div>
+      <button onclick="mineLoot()" class="w-full sm:w-auto px-6 py-4 bg-yellow-500 border-2 border-white text-retroBg font-pixel text-xs hover:bg-yellow-400 box-shadow-retro-pink hover:shadow-none transition transform active:scale-95 uppercase">
+        <i class="fa-solid fa-shovel mr-1"></i>Копать Лут! 🦴🌸🐟
+      </button>
+    </section>
+
+  </main>
+
+  <footer class="border-t-4 border-retroBorder bg-retroCard p-4 text-center text-xs text-gray-500 font-mono tracking-wider">
+    <p>© 2026 ЛАВ-ГАВ & ЛУТ Matchroom.</p>
+  </footer>
+
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
