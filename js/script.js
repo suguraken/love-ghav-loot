@@ -626,10 +626,12 @@ document.addEventListener('DOMContentLoaded', () => {
   updateInventoryUI();
 
   // ПРОВЕРКА: если персонажа нет — показываем заставку (туториал)
+  const tutorialModal = document.getElementById('tutorial-modal');
   if (!playerPet) {
     openTutorialModal();
   } else {
-    // Если персонаж есть, сразу показываем игровой интерфейс
+    // Если персонаж есть, скрываем модалку и показываем игру
+    tutorialModal.classList.add('hidden');
     updateUI();
   }
 
